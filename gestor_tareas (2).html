@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Gestor de Tareas — Curso</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet" />
+<style>
+:root {
+  --bg: #F6F4EF;
+  --surface: #FFFFFF;
+  --surface2: #EFEDE7;
+  --border: #DDD9D0;
+  --border-light: #E8E5DE;
+  --text: #1A1714;
+  --text2: #6B6560;
+  --text3: #A09890;
+  --accent: #2D6A4F;
+  --accent-h: #245840;
+  --accent-light: #E6F2EC;
+  --danger: #A83232;
+  --danger-light: #F9ECEC;
+  --r: 10px;
+  --r-sm: 6px;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); font-size: 14px; min-height: 100vh; }
+
+.app { display: flex; min-height: 100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 220px; flex-shrink: 0;
+  background: var(--surface);
+  border-right: 1px solid var(--border);
+  display: flex; flex-direction: column;
+  position: fixed; top: 0; left: 0; bottom: 0; z-index: 50;
+}
+.sidebar-logo { padding: 22px 20px 18px; border-bottom: 1px solid var(--border-light); }
+.sidebar-logo h1 { font-family: 'DM Serif Display', serif; font-size: 18px; font-weight: 400; line-height: 1.2; }
+.sidebar-logo h1 span { color: var(--accent); }
+.sidebar-logo p { font-size: 11px; color: var(--text3); margin-top: 3px; }
+
+.nav-label { font-size: 10px; font-weight: 600; letter-spacing: 0.1em; text-transform: uppercase; color: var(--text3); padding: 16px 20px 8px; }
+
+.nav-item {
+  display: flex; align-items: center; gap: 10px;
+  padding: 10px 20px; cursor: pointer;
+  border-left: 3px solid transparent;
+  transition: all 0.15s; color: var(--text2);
+  font-size: 13px; user-select: none;
+}
+.nav-item:hover { background: var(--surface2); color: var(--text); }
+.nav-item.active { border-left-color: var(--accent); background: var(--accent-light); color: var(--accent); font-weight: 500; }
+.nav-icon {
+  width: 28px; height: 28px; border-radius: 7px;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; flex-shrink: 0; font-weight: 600;
+  transition: background 0.15s;
+}
+.nav-item.active .nav-icon { background: var(--accent); color: white; }
+.nav-badge {
+  margin-left: auto; background: var(--surface2); color: var(--text3);
+  font-size: 10px; font-weight: 600; padding: 2px 7px; border-radius: 20px; min-width: 28px; text-align: center;
+}
+.nav-item.active .nav-badge { background: var(--accent); color: white; }
+.sidebar-footer { margin-top: auto; padding: 14px 16px; border-top: 1px solid var(--border-light); }
+.sidebar-footer button {
+  width: 100%; padding: 8px 12px; border-radius: var(--r-sm);
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+  color: var(--text2); transition: all 0.15s; text-align: left;
+}
+.sidebar-footer button:hover { background: var(--surface2); }
+
+/* MAIN */
+.main { margin-left: 220px; flex: 1; display: flex; flex-direction: column; min-height: 100vh; }
+
+/* TOPBAR */
+.topbar {
+  background: var(--surface); border-bottom: 1px solid var(--border);
+  padding: 16px 28px; display: flex; align-items: center; gap: 14px;
+  position: sticky; top: 0; z-index: 40;
+}
+.topbar-info { flex: 1; }
+.topbar-info h2 { font-family: 'DM Serif Display', serif; font-size: 20px; font-weight: 400; }
+.topbar-info p { font-size: 12px; color: var(--text3); margin-top: 1px; }
+.stat-pill { background: var(--accent-light); color: var(--accent); font-size: 12px; font-weight: 600; padding: 6px 14px; border-radius: 20px; }
+
+/* PROGRESS */
+.progress-bar-wrap { padding: 16px 28px 0; display: flex; align-items: center; gap: 12px; }
+.progress-bar-bg { flex: 1; height: 6px; border-radius: 3px; background: var(--surface2); overflow: hidden; }
+.progress-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.4s ease; }
+.progress-label { font-size: 12px; color: var(--text3); min-width: 36px; text-align: right; }
+
+/* TOOLBAR */
+.toolbar { padding: 14px 28px; display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+.search-inp {
+  flex: 1; min-width: 180px; padding: 8px 13px;
+  border: 1px solid var(--border); border-radius: var(--r-sm);
+  background: var(--surface); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text); outline: none; transition: border-color 0.15s;
+}
+.search-inp:focus { border-color: var(--accent); }
+.filter-btns { display: flex; gap: 6px; }
+.filter-btn {
+  padding: 7px 13px; border-radius: var(--r-sm);
+  font-family: 'DM Sans', sans-serif; font-size: 12px; font-weight: 500;
+  cursor: pointer; border: 1px solid var(--border); background: var(--surface);
+  color: var(--text2); transition: all 0.15s;
+}
+.filter-btn:hover { background: var(--surface2); }
+.filter-btn.active { background: var(--accent); border-color: var(--accent); color: white; }
+
+/* TABLE */
+.table-wrap { padding: 0 28px 16px; overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; box-shadow: 0 2px 10px rgba(0,0,0,0.05); min-width: 680px; }
+thead tr { background: var(--surface2); border-bottom: 1px solid var(--border); }
+th { padding: 11px 14px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); text-align: left; }
+th.c { text-align: center; }
+tbody tr { border-bottom: 1px solid var(--border-light); transition: background 0.1s; }
+tbody tr:last-child { border-bottom: none; }
+tbody tr:hover { background: #FAFAF8; }
+td { padding: 9px 12px; vertical-align: middle; }
+td.num-td { color: var(--text3); font-size: 12px; text-align: center; width: 36px; }
+td.check-td { text-align: center; width: 90px; }
+td.nota-td { width: 130px; }
+
+.name-inp {
+  background: transparent; border: 1px solid transparent; border-radius: var(--r-sm);
+  padding: 5px 8px; font-family: 'DM Sans', sans-serif; font-size: 13px; font-weight: 500;
+  color: var(--text); width: 100%; outline: none; transition: all 0.15s; min-width: 140px;
+}
+.name-inp:hover { border-color: var(--border); background: var(--surface2); }
+.name-inp:focus { border-color: var(--accent); background: var(--surface); }
+
+.check-toggle {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 8px;
+  border: 1.5px solid var(--border); cursor: pointer;
+  transition: all 0.15s; background: var(--surface);
+  font-size: 15px; color: transparent; user-select: none;
+}
+.check-toggle:hover { border-color: var(--accent); background: var(--accent-light); }
+.check-toggle.done { background: var(--accent); border-color: var(--accent); color: white; }
+
+.nota-inp, .comment-inp {
+  width: 100%; padding: 6px 10px;
+  border: 1px solid var(--border-light); border-radius: var(--r-sm);
+  font-family: 'DM Sans', sans-serif; font-size: 12px;
+  color: var(--text); background: var(--surface2);
+  outline: none; transition: border-color 0.15s, background 0.15s;
+}
+.nota-inp:focus, .comment-inp:focus { border-color: var(--accent); background: var(--surface); }
+.nota-inp::placeholder, .comment-inp::placeholder { color: var(--text3); }
+
+.del-btn {
+  background: none; border: none; color: var(--text3);
+  cursor: pointer; border-radius: var(--r-sm); padding: 5px 7px;
+  font-size: 14px; line-height: 1; transition: all 0.15s;
+}
+.del-btn:hover { background: var(--danger-light); color: var(--danger); }
+.empty-msg td { text-align: center; padding: 40px; color: var(--text3); font-size: 13px; }
+
+/* ADD ROW */
+.add-row { padding: 0 28px 32px; display: flex; gap: 8px; }
+.add-row input {
+  flex: 1; padding: 8px 13px; border: 1px solid var(--border);
+  border-radius: var(--r-sm); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; color: var(--text); background: var(--surface); outline: none; transition: border-color 0.15s;
+}
+.add-row input:focus { border-color: var(--accent); }
+.btn-primary {
+  padding: 8px 16px; background: var(--accent); color: white;
+  border: none; border-radius: var(--r-sm); font-family: 'DM Sans', sans-serif;
+  font-size: 13px; font-weight: 500; cursor: pointer; white-space: nowrap; transition: background 0.15s;
+}
+.btn-primary:hover { background: var(--accent-h); }
+
+/* OVERVIEW */
+.overview { padding: 24px 28px 40px; display: none; flex-direction: column; gap: 20px; }
+.overview.visible { display: flex; }
+.ov-cards { display: grid; grid-template-columns: repeat(5, 1fr); gap: 12px; }
+.ov-card {
+  background: var(--surface); border: 1px solid var(--border); border-radius: var(--r);
+  padding: 18px 16px; cursor: pointer; transition: all 0.15s;
+  box-shadow: 0 1px 6px rgba(0,0,0,0.04);
+}
+.ov-card:hover { transform: translateY(-2px); box-shadow: 0 4px 16px rgba(0,0,0,0.09); }
+.ov-label { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.09em; color: var(--text3); margin-bottom: 10px; }
+.ov-num { font-family: 'DM Serif Display', serif; font-size: 36px; color: var(--accent); line-height: 1; margin-bottom: 4px; }
+.ov-sub { font-size: 12px; color: var(--text3); }
+.ov-bar-bg { margin-top: 12px; height: 5px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+.ov-bar-fill { height: 100%; border-radius: 3px; background: var(--accent); transition: width 0.5s ease; }
+.ov-table-title { font-family: 'DM Serif Display', serif; font-size: 17px; font-weight: 400; margin-bottom: 12px; }
+.ov-full-table { border-collapse: collapse; width: 100%; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.04); }
+.ov-full-table th { padding: 10px 14px; font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.08em; color: var(--text3); background: var(--surface2); border-bottom: 1px solid var(--border); text-align: left; }
+.ov-full-table td { padding: 9px 14px; border-bottom: 1px solid var(--border-light); font-size: 13px; }
+.ov-full-table tr:last-child td { border-bottom: none; }
+.pill { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 11px; font-weight: 500; }
+.pill-yes { background: var(--accent-light); color: var(--accent); }
+.pill-no  { background: var(--surface2); color: var(--text3); }
+
+/* TASK PAGE */
+.task-page { display: none; }
+
+/* TOAST */
+#toast {
+  position: fixed; bottom: 24px; right: 24px;
+  background: var(--text); color: white;
+  padding: 10px 18px; border-radius: var(--r);
+  font-size: 13px; z-index: 999;
+  opacity: 0; transform: translateY(8px);
+  transition: all 0.22s; pointer-events: none;
+}
+#toast.show { opacity: 1; transform: translateY(0); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <nav class="sidebar">
+    <div class="sidebar-logo">
+      <h1>Gestor de<br/><span>Tareas</span></h1>
+      <p id="sidebar-count">45 alumnos</p>
+    </div>
+    <div class="nav-label">Resumen</div>
+    <div class="nav-item active" data-page="overview" onclick="goTo('overview')">
+      <div class="nav-icon">◎</div>
+      Vista general
+    </div>
+    <div class="nav-label">Tareas</div>
+    <div class="nav-item" data-page="t1" onclick="goTo('t1')">
+      <div class="nav-icon">1</div>Tarea 1
+      <span class="nav-badge" id="badge-t1">0</span>
+    </div>
+    <div class="nav-item" data-page="t2" onclick="goTo('t2')">
+      <div class="nav-icon">2</div>Tarea 2
+      <span class="nav-badge" id="badge-t2">0</span>
+    </div>
+    <div class="nav-item" data-page="t3" onclick="goTo('t3')">
+      <div class="nav-icon">3</div>Tarea 3
+      <span class="nav-badge" id="badge-t3">0</span>
+    </div>
+    <div class="nav-item" data-page="t41" onclick="goTo('t41')">
+      <div class="nav-icon">4.1</div>Tarea 4.1
+      <span class="nav-badge" id="badge-t41">0</span>
+    </div>
+    <div class="nav-item" data-page="t42" onclick="goTo('t42')">
+      <div class="nav-icon">4.2</div>Tarea 4.2
+      <span class="nav-badge" id="badge-t42">0</span>
+    </div>
+    <div class="sidebar-footer">
+      <button onclick="exportCSV()">↓ Exportar CSV</button>
+    </div>
+  </nav>
+
+  <!-- MAIN -->
+  <div class="main">
+
+    <!-- OVERVIEW PAGE -->
+    <div class="overview" id="page-overview">
+      <div class="ov-cards" id="ov-cards"></div>
+      <div>
+        <p class="ov-table-title">Resumen por alumno</p>
+        <table class="ov-full-table"><tbody id="ov-tbody"></tbody></table>
+      </div>
+    </div>
+
+    <!-- TASK PAGES -->
+    <div id="task-pages"></div>
+
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+const TASKS = ['t1','t2','t3','t41','t42'];
+const TLABELS = {t1:'Tarea 1', t2:'Tarea 2', t3:'Tarea 3', t41:'Tarea 4.1', t42:'Tarea 4.2'};
+
+let students = Array.from({length:45}, (_,i) => ({
+  id: i+1,
+  name: `Alumno ${i+1}`,
+  tasks: Object.fromEntries(TASKS.map(t => [t, {done:false, nota:'', comment:''}]))
+}));
+let nextId = 46;
+let currentPage = 'overview';
+let filters = Object.fromEntries(TASKS.map(t => [t,'all']));
+
+// ─── Navigation ───────────────────────────────────────────
+function goTo(page) {
+  currentPage = page;
+  document.querySelectorAll('.nav-item').forEach(el =>
+    el.classList.toggle('active', el.dataset.page === page));
+  document.getElementById('page-overview').classList.toggle('visible', page === 'overview');
+  document.querySelectorAll('.task-page').forEach(el =>
+    el.style.display = el.dataset.task === page ? 'block' : 'none');
+  if (page === 'overview') renderOverview();
+  else renderTask(page);
+}
+
+// ─── Build page shells ─────────────────────────────────────
+function buildPages() {
+  document.getElementById('task-pages').innerHTML = TASKS.map(tk => `
+    <div class="task-page" data-task="${tk}" style="display:none">
+      <div class="topbar">
+        <div class="topbar-info">
+          <h2>${TLABELS[tk]}</h2>
+          <p id="desc-${tk}"></p>
+        </div>
+        <span class="stat-pill" id="pill-${tk}"></span>
+      </div>
+      <div class="progress-bar-wrap">
+        <div class="progress-bar-bg"><div class="progress-bar-fill" id="bar-${tk}" style="width:0%"></div></div>
+        <span class="progress-label" id="pct-${tk}">0%</span>
+      </div>
+      <div class="toolbar">
+        <input class="search-inp" id="search-${tk}" type="text" placeholder="🔍  Buscar alumno..."
+          oninput="renderTask('${tk}')" />
+        <div class="filter-btns">
+          <button class="filter-btn active" id="f-all-${tk}" onclick="setFilter('${tk}','all')">Todos</button>
+          <button class="filter-btn" id="f-done-${tk}" onclick="setFilter('${tk}','done')">Presentados</button>
+          <button class="filter-btn" id="f-pend-${tk}" onclick="setFilter('${tk}','pending')">Pendientes</button>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr>
+            <th class="c" style="width:36px">#</th>
+            <th>Alumno</th>
+            <th class="c">Presentado</th>
+            <th style="width:130px">Nota</th>
+            <th>Comentario</th>
+            <th style="width:38px"></th>
+          </tr></thead>
+          <tbody id="tbody-${tk}"></tbody>
+        </table>
+      </div>
+      <div class="add-row">
+        <input type="text" id="new-${tk}" placeholder="Nombre del nuevo alumno..." maxlength="60"
+          onkeydown="if(event.key==='Enter')addStudent('${tk}')" />
+        <button class="btn-primary" onclick="addStudent('${tk}')">+ Añadir alumno</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ─── Render task page ──────────────────────────────────────
+function renderTask(tk) {
+  const q = (document.getElementById('search-'+tk)?.value||'').trim().toLowerCase();
+  const f = filters[tk];
+  let list = students;
+  if (q) list = list.filter(s => s.name.toLowerCase().includes(q));
+  if (f==='done') list = list.filter(s => s.tasks[tk].done);
+  if (f==='pending') list = list.filter(s => !s.tasks[tk].done);
+
+  const done = students.filter(s => s.tasks[tk].done).length;
+  const total = students.length;
+  const pct = total ? Math.round(done/total*100) : 0;
+
+  document.getElementById('pill-'+tk).textContent = `${done} / ${total} presentados`;
+  document.getElementById('desc-'+tk).textContent = `${total} alumnos · ${pct}% de entrega`;
+  document.getElementById('bar-'+tk).style.width = pct+'%';
+  document.getElementById('pct-'+tk).textContent = pct+'%';
+  document.getElementById('badge-'+tk).textContent = done;
+
+  const tbody = document.getElementById('tbody-'+tk);
+  if (!list.length) {
+    tbody.innerHTML = `<tr class="empty-msg"><td colspan="6">No hay alumnos que mostrar.</td></tr>`;
+    return;
+  }
+  tbody.innerHTML = list.map((s,i) => {
+    const t = s.tasks[tk];
+    return `<tr>
+      <td class="num-td">${i+1}</td>
+      <td><input class="name-inp" value="${esc(s.name)}" placeholder="Nombre..."
+        oninput="updName(${s.id},this.value)" /></td>
+      <td class="check-td">
+        <span class="check-toggle${t.done?' done':''}" onclick="toggleTask(${s.id},'${tk}')"
+          title="${t.done?'Marcar como no presentado':'Marcar como presentado'}">✓</span>
+      </td>
+      <td class="nota-td">
+        <input class="nota-inp" type="text" value="${esc(t.nota)}" placeholder="Ej: 8.5, Apto…"
+          maxlength="30" oninput="updField(${s.id},'${tk}','nota',this.value)" />
+      </td>
+      <td>
+        <input class="comment-inp" type="text" value="${esc(t.comment)}" placeholder="Comentario u observación..."
+          oninput="updField(${s.id},'${tk}','comment',this.value)" />
+      </td>
+      <td><button class="del-btn" onclick="delStudent(${s.id})" title="Eliminar">✕</button></td>
+    </tr>`;
+  }).join('');
+}
+
+// ─── Render overview ───────────────────────────────────────
+function renderOverview() {
+  const total = students.length;
+  document.getElementById('ov-cards').innerHTML = TASKS.map(tk => {
+    const c = students.filter(s=>s.tasks[tk].done).length;
+    const pct = total ? Math.round(c/total*100) : 0;
+    return `<div class="ov-card" onclick="goTo('${tk}')">
+      <div class="ov-label">${TLABELS[tk]}</div>
+      <div class="ov-num">${c}</div>
+      <div class="ov-sub">de ${total} · ${pct}%</div>
+      <div class="ov-bar-bg"><div class="ov-bar-fill" style="width:${pct}%"></div></div>
+    </div>`;
+  }).join('');
+
+  document.getElementById('ov-tbody').innerHTML =
+    `<tr style="background:var(--surface2);border-bottom:1px solid var(--border)">
+      <th style="padding:10px 14px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);width:36px">#</th>
+      <th style="padding:10px 14px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3)">Alumno</th>
+      ${TASKS.map(tk=>`<th style="padding:10px 14px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);text-align:center">${TLABELS[tk]}</th>`).join('')}
+      <th style="padding:10px 14px;font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;color:var(--text3);text-align:center">Total</th>
+    </tr>`+
+    students.map((s,i) => {
+      const dc = TASKS.filter(tk=>s.tasks[tk].done).length;
+      return `<tr style="border-bottom:1px solid var(--border-light)">
+        <td style="padding:9px 14px;font-size:12px;color:var(--text3);text-align:center">${i+1}</td>
+        <td style="padding:9px 14px;font-weight:500;font-size:13px">${esc(s.name)}</td>
+        ${TASKS.map(tk=>`<td style="padding:9px 14px;text-align:center">
+          <span class="pill ${s.tasks[tk].done?'pill-yes':'pill-no'}">${s.tasks[tk].done?'Sí':'No'}</span>
+        </td>`).join('')}
+        <td style="padding:9px 14px;text-align:center;font-weight:600;color:var(--accent)">${dc}/5</td>
+      </tr>`;
+    }).join('');
+
+  document.getElementById('sidebar-count').textContent = `${total} alumnos`;
+  TASKS.forEach(tk => {
+    document.getElementById('badge-'+tk).textContent = students.filter(s=>s.tasks[tk].done).length;
+  });
+}
+
+// ─── Helpers ──────────────────────────────────────────────
+function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function setFilter(tk, val) {
+  filters[tk] = val;
+  ['all','done','pend'].forEach(f => {
+    const b = document.getElementById(`f-${f}-${tk}`);
+    if (b) b.classList.toggle('active',
+      (f==='all'&&val==='all')||(f==='done'&&val==='done')||(f==='pend'&&val==='pending'));
+  });
+  renderTask(tk);
+}
+
+function toggleTask(sid, tk) {
+  const s = students.find(x=>x.id===sid);
+  if (s) { s.tasks[tk].done = !s.tasks[tk].done; renderTask(tk); }
+}
+
+function updField(sid, tk, field, val) {
+  const s = students.find(x=>x.id===sid);
+  if (s) s.tasks[tk][field] = val;
+}
+
+function updName(sid, val) {
+  const s = students.find(x=>x.id===sid);
+  if (s) s.name = val;
+}
+
+function delStudent(sid) {
+  if (!confirm('¿Eliminar este alumno?')) return;
+  students = students.filter(x=>x.id!==sid);
+  if (currentPage==='overview') renderOverview(); else renderTask(currentPage);
+  toast('Alumno eliminado');
+}
+
+function addStudent(tk) {
+  const inp = document.getElementById('new-'+tk);
+  const name = inp.value.trim();
+  if (!name) { inp.focus(); return; }
+  students.push({ id:nextId++, name,
+    tasks: Object.fromEntries(TASKS.map(t=>[t,{done:false,nota:'',comment:''}])) });
+  inp.value = '';
+  renderTask(tk);
+  toast(`"${name}" añadido`);
+}
+
+function exportCSV() {
+  const heads = ['#','Nombre',...TASKS.flatMap(tk=>[`${TLABELS[tk]} Presentado`,`${TLABELS[tk]} Nota`,`${TLABELS[tk]} Comentario`])];
+  const rows = students.map((s,i)=>[i+1,`"${s.name}"`,...TASKS.flatMap(tk=>[s.tasks[tk].done?'Sí':'No',`"${s.tasks[tk].nota}"`,`"${s.tasks[tk].comment}"`])]);
+  const csv = [heads,...rows].map(r=>r.join(',')).join('\n');
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'}));
+  a.download = 'tareas_curso.csv'; a.click();
+  toast('CSV exportado');
+}
+
+function toast(msg) {
+  const el = document.getElementById('toast');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(()=>el.classList.remove('show'), 2200);
+}
+
+// ─── Init ─────────────────────────────────────────────────
+buildPages();
+goTo('overview');
+</script>
+</body>
+</html>
